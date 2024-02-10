@@ -1,0 +1,4 @@
+repository "mini_game_2@GhillieInGrass@cloud"
+  path "/"
+    br "/main"
+    co "/main"
