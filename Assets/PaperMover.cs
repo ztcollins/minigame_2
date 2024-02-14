@@ -130,7 +130,7 @@ public class PaperMover : MonoBehaviour
         {
             lastHealthHitWhen = Time.time;
             paperDurability -= dog.getDamage();
-            Debug.Log("Paper health: " + paperDurability);
+            //Debug.Log("Paper health: " + paperDurability);
         }
 
         //end game  
