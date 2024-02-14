@@ -133,12 +133,16 @@ public class PaperMover : MonoBehaviour
             Debug.Log("Paper health: " + paperDurability);
         }
 
+        //end game  
+        if(paperDurability <= 0) {
+            FindObjectOfType<GameManager>().EndGame();
+        }
+
 
         float currZ = transform.position.z;
         currZ += dogPull;
 
         if(Input.GetKey(KeyCode.Space)) {
-            Debug.Log("space key was pressed!");
             currZ += playerPull;
         }
 
