@@ -89,7 +89,7 @@ public class PaperMover : MonoBehaviour
         state = new StateAttributes
         {
             dogExcitment = 0,
-            playerHearts = 5,
+            playerHearts = 100,
             lastHealthHitWhen = Time.time - 5,
             dogPhase = DoggoPhase.DISTRACTED,
             nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
@@ -123,7 +123,7 @@ public class PaperMover : MonoBehaviour
         state = new StateAttributes
         {
             dogExcitment = 20,
-            playerHearts = 5,
+            playerHearts = 1000,
             lastHealthHitWhen = Time.time - 5,
             dogPhase = DoggoPhase.PLAYFUL,
             nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
@@ -164,12 +164,10 @@ public class PaperMover : MonoBehaviour
         }
         else if(currentScene.name == "Level02") {
             Lvl2();
-            FindObjectOfType<GameManager>().playGrowls();
         }
         else {
             Debug.Log(currentScene.name);
             Lvl2();
-            FindObjectOfType<GameManager>().playGrowls();
             //FindObjectOfType<GameManager>().EndGame(); uncomment to see death animation on third scene
         }
 
@@ -198,6 +196,9 @@ public class PaperMover : MonoBehaviour
         if (iFrame % 10 == 0)
         {
             //Debug.Log("Health:" + state.playerHearts + " threshold:" + lvl.dogExcitedThreshold + " excitment:" + state.dogExcitment + " phase:" + state.dogPhase);
+        }
+        if(iFrame % 60 == 0) {
+            state.playerHearts -= 1;
         }
 
         DoggoPhaseAttributes dogAttrs = lvl.dogPhaseAttributes[phaseIdx(state.dogPhase)];
@@ -240,9 +241,11 @@ public class PaperMover : MonoBehaviour
 
         // space Pressed!
         currZ += playerPull;
+
+        
         if (state.dogPhase == DoggoPhase.BEAST && since(state.lastHealthHitWhen) > lvl.gracePeriodBeastDamage)
         {
-            state.playerHearts -= 1;
+            state.playerHearts -= 200;
             state.lastHealthHitWhen = Time.time;
             Debug.Log("Ouch! Health decreased. Hearts: " + state.playerHearts);
         }
@@ -263,7 +266,7 @@ public class PaperMover : MonoBehaviour
             state.dogExcitment = Mathf.Clamp(state.dogExcitment, 0, 200);
         }
 
-        if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment > lvl.dogExcitedThreshold)
+        if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment >= lvl.dogExcitedThreshold)
         {
             state.dogPhase = DoggoPhase.BEAST;
             setDoggoPhaseUI(state.dogPhase);
@@ -284,6 +287,7 @@ public class PaperMover : MonoBehaviour
         {
             Debug.Log("About to enter beast mode!");
             FindObjectOfType<GameManager>().playGrowls();
+            //add eye animation here!
         }
 
         if (state.dogPhase == DoggoPhase.DISTRACTED && since(state.whenExitDistracted) > 0)
