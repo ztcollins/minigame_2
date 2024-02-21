@@ -22,6 +22,7 @@ public class PaperMover : MonoBehaviour
     public ExcitementBar excitementBar;
     public HealthBar healthBar;
     public PhaseUI phaseState;
+    public ExcitementIndicator excitementIndicator;
     [SerializeField] float speed = 1.0f; //how fast it shakes
     [SerializeField] float amount = 1.0f; //how much it shakes
     Vector3 startPos;
@@ -134,6 +135,7 @@ public class PaperMover : MonoBehaviour
         excitementBar.SetExcitement(state.dogExcitment);
         healthBar.SetMaxHealth(state.playerHearts);
         setDoggoPhaseUI(state.dogPhase);
+        excitementIndicator.updateVerticalLinePosition(-.5f);
     }
 
     void setDoggoPhaseUI (DoggoPhase currPhase) {

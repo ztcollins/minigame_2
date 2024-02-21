@@ -355,6 +355,7 @@
 "Assets/Scripts/dog_follow.cs"
 "Assets/Scripts/EndTrigger.cs"
 "Assets/Scripts/ExcitementBar.cs"
+"Assets/Scripts/ExcitementIndicator.cs"
 "Assets/Scripts/GameManager.cs"
 "Assets/Scripts/HealthBar.cs"
 "Assets/Scripts/LevelComplete.cs"
