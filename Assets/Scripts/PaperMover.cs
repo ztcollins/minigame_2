@@ -195,7 +195,7 @@ public class PaperMover : MonoBehaviour
         iFrame += 1;
         if (iFrame % 10 == 0)
         {
-            //Debug.Log("Health:" + state.playerHearts + " threshold:" + lvl.dogExcitedThreshold + " excitment:" + state.dogExcitment + " phase:" + state.dogPhase);
+            Debug.Log("Health:" + state.playerHearts + " threshold:" + lvl.dogExcitedThreshold + " excitment:" + state.dogExcitment + " phase:" + state.dogPhase);
         }
         if(iFrame % 60 == 0) {
             state.playerHearts -= 1;
@@ -286,7 +286,6 @@ public class PaperMover : MonoBehaviour
         if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment * 1.2 > lvl.dogExcitedThreshold)
         {
             Debug.Log("About to enter beast mode!");
-            FindObjectOfType<GameManager>().playGrowls();
             //add eye animation here!
         }
 
@@ -294,7 +293,6 @@ public class PaperMover : MonoBehaviour
         {
             state.dogPhase = DoggoPhase.PLAYFUL;
             setDoggoPhaseUI(state.dogPhase);
-            FindObjectOfType<GameManager>().playGrowls();
         }
 
         

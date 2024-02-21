@@ -1070,7 +1070,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &736028342
 Transform:
   m_ObjectHideFlags: 0
@@ -1114,7 +1114,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 736028341}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1169,7 +1169,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.465
+  m_Volume: 1
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -1433,7 +1433,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.513
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1894,6 +1894,7 @@ MonoBehaviour:
   restartDelay: 1
   completeLevelUI: {fileID: 1742501142}
   failLevelUI: {fileID: 2127353971}
+  eyeGlow: {fileID: 0}
   source: {fileID: 963194229}
   music1: {fileID: 8300000, guid: 85e72f7da4961fd45b617804f323fb1a, type: 3}
   music2: {fileID: 8300000, guid: 85e72f7da4961fd45b617804f323fb1a, type: 3}

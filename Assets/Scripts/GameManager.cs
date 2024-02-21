@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
 
     public GameObject completeLevelUI;
     public GameObject failLevelUI;
+    public GameObject eyeGlow;
     public AudioSource source;
     public AudioClip music1;
     public AudioClip music2;
@@ -58,4 +59,12 @@ public class GameManager : MonoBehaviour
         dogSource.Pause();
     }
 
+    public void toggleEyeGlow() {
+        if(eyeGlow.activeInHierarchy) {
+            eyeGlow.SetActive(false);
+        }
+        else {
+            eyeGlow.SetActive(true);
+        }
+    }
 }
