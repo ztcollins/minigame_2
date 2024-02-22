@@ -27,18 +27,16 @@ public class PaperMover : MonoBehaviour
     [SerializeField] float amount = 1.0f; //how much it shakes
     Vector3 startPos;
 
-    [SerializeField] float playerPull = -0.008f; // how much paper is pulled when player presses space.
-    [SerializeField] float dogPull = 0.003f;
-
-    [SerializeField] float dogExcitmentAddScale_ = 0.01f;
-    [SerializeField] float dogExcitmentReductionScale_ = -0.01f;
+    float playerPull = -0.008f; // how much paper is pulled when player presses space.
+    float dogPull = 0.002f;
 
     const float PHYSICS_TICK = 0.01f;
+    const float DEFAULT_EXCITMENT_ADD = 0.7f;
+    const float DEFAULT_EXCITMENT_REDUCE = -1f;
 
 
     struct LevelAttributes
     {
-        public float dogExcitedThresholdStart; // vertical line. Beyond this, the dog will enter beast mode.
         public float dogExcitmentAddScale; // how much dog excitement is added everytime space is pressed.
         public float dogExcitmentReductionScale; // how much dog excitment drops everytime space is not pressed. 2 is to 1 means it drops twice as quickly as it builds up
 
@@ -64,17 +62,29 @@ public class PaperMover : MonoBehaviour
 
     struct ThresholdChangingState
     {
+        public bool modeEnabledForThisScene;
         public bool ongoing;
-        public float whenStarted;
-        public float expectedEndTime;
-        public float from;
-        public float to;
+        public int ticksLeft;
+        public float perTickDelta;
     }
 
-    private ThresholdChangingState constructFalseThresholdChangingState()
+    private ThresholdChangingState constructFalseThresholdChangingState(bool enabledForScene)
     {
-        return new ThresholdChangingState{
+        return new ThresholdChangingState {
             ongoing = false,
+            modeEnabledForThisScene = enabledForScene,
+        };
+    }
+
+    private ThresholdChangingState constructThresholdChangingState(float totalChange, float overTimeSec)
+    {
+        int nTicks = (int) (overTimeSec / PHYSICS_TICK);
+        return new ThresholdChangingState
+        {
+            modeEnabledForThisScene = true,
+            ongoing = true,
+            ticksLeft = nTicks,
+            perTickDelta = totalChange / nTicks
         };
     }
 
@@ -96,7 +106,7 @@ public class PaperMover : MonoBehaviour
         public DoggoPhase dogPhase;
 
         public float nextThresholdChange; // at what time should we start changing the threshold;
-        ThresholdChangingState thresholdChangingState;
+        public ThresholdChangingState thresholdChangingState;
 
         public float whenExitDistracted; // if distracted, when to exit the mode. Should be set when distracted is enabled.
 
@@ -107,10 +117,10 @@ public class PaperMover : MonoBehaviour
     StateAttributes state;
     System.Random rnd;
 
-    private float calculateConstantHealthLossGivenPlayTime(float playTimeInSeconds, int maxHealth)
+    private float calculateConstantHealthLossGivenPlayTime(float playTimeInSeconds, float maxHealth)
     {
         float totalTicks = playTimeInSeconds / PHYSICS_TICK;
-        return 0;
+        return maxHealth / totalTicks;
     }
 
     void Lvl1()
@@ -119,7 +129,6 @@ public class PaperMover : MonoBehaviour
         Debug.Log("level 1! sleepy doggo. doesn't do anything. baby tutorial.");
         lvl = new LevelAttributes
         {
-            dogExcitedThresholdStart = 100,
             dogExcitmentAddScale = 0f,
             dogExcitmentReductionScale = 0f,
 
@@ -143,6 +152,7 @@ public class PaperMover : MonoBehaviour
             dogExcitmentThreshold = 100f,
             dogPhase = DoggoPhase.DISTRACTED,
             nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
+            thresholdChangingState = constructFalseThresholdChangingState(false),
             whenExitDistracted = Time.time + 100000,
         };
     }
@@ -154,9 +164,8 @@ public class PaperMover : MonoBehaviour
         Debug.Log("level 2! show that pulling increasing doggo excitment.");
         lvl = new LevelAttributes
         {
-            dogExcitedThresholdStart = 100f,
-            dogExcitmentAddScale = 1f,
-            dogExcitmentReductionScale = -1.5f,
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE,
 
             excitedThresholdRanges_forLevel = (100, 100),
             timeToChangeThreshold_seconds = 10000,
@@ -178,6 +187,7 @@ public class PaperMover : MonoBehaviour
             dogExcitmentThreshold = 101f,
             dogPhase = DoggoPhase.PLAYFUL,
             nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
+            thresholdChangingState = constructFalseThresholdChangingState(false),
             whenExitDistracted = Time.time + 100000,
         };
     }
@@ -188,9 +198,8 @@ public class PaperMover : MonoBehaviour
         Debug.Log("level 3! play w/ playful dog w/ decreasing health.");
         lvl = new LevelAttributes
         {
-            dogExcitedThresholdStart = 100f,
-            dogExcitmentAddScale = 1f,
-            dogExcitmentReductionScale = -1.5f,
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE,
 
             excitedThresholdRanges_forLevel = (100, 100),
             timeToChangeThreshold_seconds = 10000,
@@ -201,7 +210,7 @@ public class PaperMover : MonoBehaviour
             maxHealth = 100,
             gracePeriodBeforeBeastDamage = 10000,
             beastModeFaultDamage = 0,
-            constantHealthLoss = 0.1f,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(12, 100),
         };
 
         state = new StateAttributes
@@ -212,43 +221,182 @@ public class PaperMover : MonoBehaviour
             dogExcitmentThreshold = 101f,
             dogPhase = DoggoPhase.PLAYFUL,
             nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
+            thresholdChangingState = constructFalseThresholdChangingState(false),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
+    void Lvl4()
+    {
+        // play w/ dog w/ static beast threshold and generous hit beast penalty.
+        Debug.Log("level 4! play w/ dog w/ static beast threshold and generous hit beast penalty..");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD*.6f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE,
+
+            excitedThresholdRanges_forLevel = (40, 80),
+            timeToChangeThreshold_seconds = 10000,
+            timeToStayAtThreshold_seconds = (10000, 10000),
+
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
+
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.4f,
+            beastModeFaultDamage = 25,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(35, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 70f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
+            thresholdChangingState = constructFalseThresholdChangingState(false),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
+    void Lvl5()
+    {
+        // play w/ dog w/ changing beast threshold and generous hit beast penalty.
+        Debug.Log("level 5! play w/ dog w/ changing beast threshold and generous hit beast penalty..");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * .9f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE*1.2f,
+
+            excitedThresholdRanges_forLevel = (40, 80),
+            timeToChangeThreshold_seconds = 1,
+            timeToStayAtThreshold_seconds = (2, 4),
+
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
+
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.3f,
+            beastModeFaultDamage = 25,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(25, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 60f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + 2,
+            thresholdChangingState = constructFalseThresholdChangingState(true),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
+    void Lvl6()
+    {
+        // HARDER!
+        Debug.Log("level 6! HARDER!");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * .9f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE * 1.2f,
+
+            excitedThresholdRanges_forLevel = (40, 60),
+            timeToChangeThreshold_seconds = 0.6f,
+            timeToStayAtThreshold_seconds = (1, 3),
+
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
+
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.3f,
+            beastModeFaultDamage = 25,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(35, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 60f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + 2,
+            thresholdChangingState = constructFalseThresholdChangingState(true),
             whenExitDistracted = Time.time + 100000,
         };
     }
 
 
+    void Lvl7()
+    {
+        // HARDERRR!
+        Debug.Log("level 7! HARDERRR!");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * .9f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE * 1.2f,
 
-        //lvl = new LevelAttributes
-        //{
-        //    dogExcitedThreshold = 50,
-        //    excitedThresholdRanges_forLevel = (60, 80),
-        //    timeToChangeThreshold_seconds = 2,
-        //    timeToStayAtThreshold_seconds = 2,
-        //    dogPhaseAttributes = new DoggoPhaseAttributes[] {
-        //        new DoggoPhaseAttributes { pullSpeedFactor = 0f, shakeDampingFactor = 0f }, // distracted
-        //        new DoggoPhaseAttributes { pullSpeedFactor = 1.2f, shakeDampingFactor = 0.1f }, // playful
-        //        new DoggoPhaseAttributes { pullSpeedFactor = 0.4f, shakeDampingFactor = 0.8f }, // beast
-        //    },
-        //    gracePeriodBeastDamage = 0.2f,
-        //    constantHealthLoss = 0.1f,
-        //};
+            excitedThresholdRanges_forLevel = (40, 60),
+            timeToChangeThreshold_seconds = 0.6f,
+            timeToStayAtThreshold_seconds = (1, 3),
 
-        //state = new StateAttributes
-        //{
-        //    dogExcitment = 20,
-        //    playerHearts = 1000,
-        //    lastHealthHitWhen = Time.time - 5,
-        //    dogPhase = DoggoPhase.PLAYFUL,
-        //    nextThresholdChange = Time.time + lvl.timeToChangeThreshold_seconds,
-        //    whenExitDistracted = 0, // set from external function call when we trigger a distracted state.
-        //};
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
 
-        //excitementBar.SetMaxExcitement(lvl.dogExcitedThreshold);
-        //excitementBar.SetExcitement(state.dogExcitment);
-        //healthBar.SetMaxHealth(state.playerHearts);
-        //setDoggoPhaseUI(state.dogPhase);
-        //excitementIndicator.updateVerticalLinePosition(0.8f);
-    //}
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.1f,
+            beastModeFaultDamage = 25,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(20, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 60f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + 2,
+            thresholdChangingState = constructFalseThresholdChangingState(true),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
+    void Lvl8()
+    {
+        // Asshole! Constantly changing threshold
+        Debug.Log("level 7! Asshole! Constantly changing threshold");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * .9f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE,
+
+            excitedThresholdRanges_forLevel = (30, 60),
+            timeToChangeThreshold_seconds = 0.3f,
+            timeToStayAtThreshold_seconds = (0, 2),
+
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
+
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.2f,
+            beastModeFaultDamage = 20,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(30, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 60f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + 2,
+            thresholdChangingState = constructFalseThresholdChangingState(true),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
 
     void setDoggoPhaseUI (DoggoPhase currPhase) {
         if(currPhase == DoggoPhase.BEAST) {
@@ -273,23 +421,27 @@ public class PaperMover : MonoBehaviour
 
         Scene currentScene = SceneManager.GetActiveScene();
 
-        if(currentScene.name == "Level01") {
-            Lvl1();
-        }
-        else if(currentScene.name == "Level02") {
-            Lvl2();
-        } else if (currentScene.name == "Level03")
+        switch (currentScene.name)
         {
-            Lvl3();
+            case "Level01": Lvl1(); break;
+            case "Level02": Lvl2(); break;
+            case "Level03": Lvl3(); break;
+            case "Level04": Lvl4(); break;
+            case "Level05": Lvl5(); break;
+            case "Level06": Lvl6(); break;
+            case "Level07": Lvl7(); break;
+            case "Level08": Lvl8(); break;
+            default:
+                Debug.LogError("Unable to find scene:" + currentScene.name);
+                Lvl2();
+            break;
         }
-        else {
-            Debug.Log(currentScene.name);
-            Lvl2();
-            //FindObjectOfType<GameManager>().EndGame(); uncomment to see death animation on third scene
-        }
+
+        //FindObjectOfType<GameManager>().EndGame(); uncomment to see death animation on third scene
 
         FindObjectOfType<GameManager>().playMusic();
         UpdateUI();
+
     }
 
     float since(float when)
@@ -316,14 +468,14 @@ public class PaperMover : MonoBehaviour
 
     // Update is called once per frame
 
-    int iFrame = 0;
+    //int iFrame = 0;
     void Update()
     {
-        iFrame += 1;
-        if (iFrame % 10 == 0)
-        {
-            Debug.Log("Health:" + state.paperHealth + " threshold:" + state.dogExcitmentThreshold + " excitment:" + state.dogExcitment + " phase:" + state.dogPhase);
-        }
+        //iFrame += 1;
+        //if (iFrame % 10 == 0)
+        //{
+        //    //Debug.Log("Health:" + state.paperHealth + " threshold:" + state.dogExcitmentThreshold + " excitment:" + state.dogExcitment + " phase:" + state.dogPhase);
+        //}
 
         DoggoPhaseAttributes dogAttrs = lvl.dogPhaseAttributes[phaseIdx(state.dogPhase)];
 
@@ -339,6 +491,45 @@ public class PaperMover : MonoBehaviour
             state.paperHealth -= lvl.constantHealthLoss;
         }
 
+        // check if threshold needs to change.
+        if (tick && state.thresholdChangingState.modeEnabledForThisScene)
+        {
+            if (!state.thresholdChangingState.ongoing)
+            {
+                if (state.nextThresholdChange - Time.time < 0)
+                {
+                    //Debug.Log("AUTO CHANGING THRESHOLD!");
+                    int min = lvl.excitedThresholdRanges_forLevel.Item1;
+                    int max = lvl.excitedThresholdRanges_forLevel.Item2;
+                    int next =  (int)(rnd.NextDouble() * (max - min) + min);
+                    float delta = next - state.dogExcitmentThreshold;
+
+                    state.thresholdChangingState = constructThresholdChangingState(delta, lvl.timeToChangeThreshold_seconds);
+
+                    min = lvl.timeToStayAtThreshold_seconds.Item1;
+                    max = lvl.timeToStayAtThreshold_seconds.Item2;
+                    float secStayAtThreshold = (float)rnd.NextDouble() * (max - min) + min;
+                    state.nextThresholdChange = Time.time + secStayAtThreshold + lvl.timeToChangeThreshold_seconds;
+                    state.thresholdChangingState.ongoing = true;
+                }
+            }
+
+            // important to check again because it will be set to true only if it enters
+            // the second if condition above.
+            if (state.thresholdChangingState.ongoing)
+            {
+                state.thresholdChangingState.ticksLeft -= 1;
+                state.dogExcitmentThreshold += state.thresholdChangingState.perTickDelta;
+
+                if (state.thresholdChangingState.ticksLeft == 0)
+                {
+                    //Debug.Log("Completing threshold!");
+                    state.thresholdChangingState.ongoing = false;
+                }
+            }
+
+        }
+
         bool spacePressed = Input.GetKey(KeyCode.Space);
         if (!spacePressed) {
             if (tick && state.dogPhase != DoggoPhase.DISTRACTED) {
@@ -352,9 +543,10 @@ public class PaperMover : MonoBehaviour
                 state.dogPhase = DoggoPhase.PLAYFUL;
 
                 // give players breathing room.
-                int min = 4;
-                int max = 14;
+                int min = 15;
+                int max = 20;
                 state.dogExcitmentThreshold += (float)rnd.NextDouble() * (max - min) + min;
+                state.dogExcitmentThreshold = Mathf.Clamp(state.dogExcitmentThreshold, lvl.excitedThresholdRanges_forLevel.Item1, lvl.excitedThresholdRanges_forLevel.Item2);
             }
 
             transform.position = new Vector3(xShake, 0, currZ);
@@ -370,7 +562,7 @@ public class PaperMover : MonoBehaviour
         {
             state.paperHealth -= lvl.beastModeFaultDamage;
             state.lastHealthHitWhen = Time.time;
-            Debug.Log("Ouch! Health decreased. Hearts: " + state.paperHealth);
+            //Debug.Log("Ouch! Health decreased. Hearts: " + state.paperHealth);
         }
 
         //end game  
@@ -393,17 +585,17 @@ public class PaperMover : MonoBehaviour
             FindObjectOfType<GameManager>().playGrowls();
 
             // immediately increase dogExcitment by some amount, so player has to suffer for few frames before getting it back.
-            int min = 5;
-            int max = 13;
+            int min = 15;
+            int max = 20;
             state.dogExcitmentThreshold -= (float)rnd.NextDouble() * (max - min) + min;
-            state.dogExcitmentThreshold = Mathf.Clamp(state.dogExcitment, 30, 100);
+            state.dogExcitmentThreshold = Mathf.Clamp(state.dogExcitmentThreshold, lvl.excitedThresholdRanges_forLevel.Item1, lvl.excitedThresholdRanges_forLevel.Item2);
 
             state.lastHealthHitWhen = Time.time; // give them 0.5s to react.
         }
 
         if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment * 1.2 > state.dogExcitmentThreshold)
         {
-            Debug.Log("About to enter beast mode!");
+            //Debug.Log("About to enter beast mode!");
             //add eye animation here!
         }
 
@@ -411,22 +603,6 @@ public class PaperMover : MonoBehaviour
         {
             state.dogPhase = DoggoPhase.PLAYFUL;
             setDoggoPhaseUI(state.dogPhase);
-        }
-
-        
-
-        // perhaps unnecessary?
-        if (state.nextThresholdChange - Time.time < 0)
-        {
-            Debug.Log("AUTO CHANGING THRESHOLD!");
-            int min = lvl.excitedThresholdRanges_forLevel.Item1;
-            int max = lvl.excitedThresholdRanges_forLevel.Item2;
-            state.dogExcitmentThreshold = (float)rnd.NextDouble() * (max - min) + min;
-
-            min = lvl.timeToStayAtThreshold_seconds.Item1;
-            max = lvl.timeToStayAtThreshold_seconds.Item2;
-            float secStayAtThreshold = (float)rnd.NextDouble() * (max - min) + min;
-            state.nextThresholdChange = Time.time + secStayAtThreshold;
         }
 
         UpdateUI();
