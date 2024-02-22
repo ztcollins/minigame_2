@@ -366,7 +366,7 @@ public class PaperMover : MonoBehaviour
     void Lvl8()
     {
         // Asshole! Constantly changing threshold
-        Debug.Log("level 7! Asshole! Constantly changing threshold");
+        Debug.Log("level 8! Asshole! Constantly changing threshold");
         lvl = new LevelAttributes
         {
             dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * .9f,
@@ -390,6 +390,40 @@ public class PaperMover : MonoBehaviour
             lastHealthHitWhen = Time.time - 5,
             dogExcitment = 0,
             dogExcitmentThreshold = 60f,
+            dogPhase = DoggoPhase.PLAYFUL,
+            nextThresholdChange = Time.time + 2,
+            thresholdChangingState = constructFalseThresholdChangingState(true),
+            whenExitDistracted = Time.time + 100000,
+        };
+    }
+
+    void Lvl9()
+    {
+        // Impossible asshold
+        Debug.Log("Level 9. Impossible asshole.");
+        lvl = new LevelAttributes
+        {
+            dogExcitmentAddScale = DEFAULT_EXCITMENT_ADD * 1.7f,
+            dogExcitmentReductionScale = DEFAULT_EXCITMENT_REDUCE*0.8f,
+
+            excitedThresholdRanges_forLevel = (20, 80),
+            timeToChangeThreshold_seconds = 0.1f,
+            timeToStayAtThreshold_seconds = (0, 1),
+
+            dogPhaseAttributes = constructDefaultDoggoPhaseAttributes(),
+
+            maxHealth = 100,
+            gracePeriodBeforeBeastDamage = 0.05f,
+            beastModeFaultDamage = 80,
+            constantHealthLoss = calculateConstantHealthLossGivenPlayTime(20, 100),
+        };
+
+        state = new StateAttributes
+        {
+            paperHealth = 100,
+            lastHealthHitWhen = Time.time - 5,
+            dogExcitment = 0,
+            dogExcitmentThreshold = 20f,
             dogPhase = DoggoPhase.PLAYFUL,
             nextThresholdChange = Time.time + 2,
             thresholdChangingState = constructFalseThresholdChangingState(true),
@@ -431,6 +465,7 @@ public class PaperMover : MonoBehaviour
             case "Level06": Lvl6(); break;
             case "Level07": Lvl7(); break;
             case "Level08": Lvl8(); break;
+            case "Level09": Lvl9(); break;
             default:
                 Debug.LogError("Unable to find scene:" + currentScene.name);
                 Lvl2();
