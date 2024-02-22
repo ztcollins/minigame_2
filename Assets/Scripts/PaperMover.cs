@@ -576,6 +576,17 @@ public class PaperMover : MonoBehaviour
 
         }
 
+        if (state.dogPhase == DoggoPhase.DISTRACTED && since(state.whenExitDistracted) > 0)
+        {
+            state.dogPhase = DoggoPhase.PLAYFUL;
+            setDoggoPhaseUI(state.dogPhase);
+        }
+
+        if (state.dogPhase == DoggoPhase.INDICATING && state.dogExcitment * 1.22 <= state.dogExcitmentThreshold)
+        {
+            state.dogPhase = DoggoPhase.PLAYFUL;
+        }
+
         bool spacePressed = Input.GetKey(KeyCode.Space);
         if (!spacePressed) {
             if (tick && state.dogPhase != DoggoPhase.DISTRACTED) {
@@ -587,6 +598,8 @@ public class PaperMover : MonoBehaviour
             if (state.dogPhase == DoggoPhase.BEAST && state.dogExcitment < state.dogExcitmentThreshold)
             {
                 state.dogPhase = DoggoPhase.PLAYFUL;
+                FindObjectOfType<GameManager>().pauseGrowls();
+
 
                 // give players breathing room.
                 int min = 15;
@@ -644,12 +657,6 @@ public class PaperMover : MonoBehaviour
             //Debug.Log("About to enter beast mode!");
             //add eye animation here!
             state.dogPhase = DoggoPhase.INDICATING;
-        }
-
-        if (state.dogPhase == DoggoPhase.DISTRACTED && since(state.whenExitDistracted) > 0)
-        {
-            state.dogPhase = DoggoPhase.PLAYFUL;
-            setDoggoPhaseUI(state.dogPhase);
         }
 
         UpdateUI();
