@@ -17,6 +17,13 @@ public class GameManager : MonoBehaviour
     public AudioSource dogSource;
     public AudioClip dogGrowl;
 
+    private AudioClip[] clips;
+
+    void Start()
+    {
+        clips = new AudioClip[] {music1, music2, music3};
+    }
+
     public void CompleteLevel () {
         completeLevelUI.SetActive(true);
     }
@@ -35,17 +42,13 @@ public class GameManager : MonoBehaviour
     }
 
     public void playMusic () {
-        int playIndex = SceneManager.GetActiveScene().buildIndex;
-        if(playIndex == 0) {
-            //play first track
-            source.PlayOneShot(music1);
-        }
-        else if (playIndex == 1) {
-            source.PlayOneShot(music2);
-        }
-        else {
-            source.PlayOneShot(music3);
-        }
+        int sceneIdx = SceneManager.GetActiveScene().buildIndex;
+        int shouldBePlayingTrack = 0;
+        if (sceneIdx >= 0 && sceneIdx <= 2) shouldBePlayingTrack = 0;
+        else if (sceneIdx >= 3 && sceneIdx <= 5) shouldBePlayingTrack = 1;
+        else shouldBePlayingTrack = 2;
+
+        source.PlayOneShot(clips[shouldBePlayingTrack]);
     }
 
     public void playGrowls () {
