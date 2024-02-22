@@ -51,17 +51,22 @@ public class GameManager : MonoBehaviour
         else shouldBePlayingTrack = 2;
 
         source.PlayOneShot(clips[shouldBePlayingTrack]);
+
+        dogSource.clip = dogGrowl;
+        dogSource.loop = true;
+        dogSource.volume = 0;
+        dogSource.Play();
     }
 
     public void playGrowls () {
         Debug.Log("playing growl");
-        dogSource.clip = dogGrowl;
-        dogSource.loop = true;
-        dogSource.Play();
+        dogSource.volume = 1f;
+        //dogSource.Play();
     }
 
     public void pauseGrowls () {
-        dogSource.Pause();
+        //dogSource.Pause();
+        dogSource.volume = 0;
     }
 
     public void setNormal() {
