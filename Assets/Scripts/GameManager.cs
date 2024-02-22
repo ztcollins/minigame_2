@@ -9,7 +9,9 @@ public class GameManager : MonoBehaviour
 
     public GameObject completeLevelUI;
     public GameObject failLevelUI;
-    public GameObject eyeGlow;
+    public GameObject normalDog;
+    public GameObject indicatorDog;
+    public GameObject beastDog;
     public AudioSource source;
     public AudioClip music1;
     public AudioClip music2;
@@ -62,12 +64,43 @@ public class GameManager : MonoBehaviour
         dogSource.Pause();
     }
 
-    public void toggleEyeGlow() {
-        if(eyeGlow.activeInHierarchy) {
-            eyeGlow.SetActive(false);
+    public void setNormal() {
+        if(beastDog.activeInHierarchy) {
+            beastDog.SetActive(false);
         }
-        else {
-            eyeGlow.SetActive(true);
+        if(indicatorDog.activeInHierarchy) {
+            indicatorDog.SetActive(false);
         }
+
+        if(!normalDog.activeInHierarchy) {
+            normalDog.SetActive(true);
+        }
+    }
+
+    public void setIndicator() {
+        if(beastDog.activeInHierarchy) {
+            beastDog.SetActive(false);
+        }
+        if(normalDog.activeInHierarchy) {
+            normalDog.SetActive(false);
+        }
+
+        if(!indicatorDog.activeInHierarchy) {
+            indicatorDog.SetActive(true);
+        }
+    }
+
+    public void setBeast() {
+        if(indicatorDog.activeInHierarchy) {
+            indicatorDog.SetActive(false);
+        }
+        if(normalDog.activeInHierarchy) {
+            normalDog.SetActive(false);
+        }
+        Debug.Log("SETTING BEAST");
+        if(!beastDog.activeInHierarchy) {
+            beastDog.SetActive(true);
+        }
+
     }
 }

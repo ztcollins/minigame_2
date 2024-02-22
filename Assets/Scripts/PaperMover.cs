@@ -14,7 +14,8 @@ enum DoggoPhase
 {
     DISTRACTED, // can only go to playful
     PLAYFUL, // can go to either distracted or beast.
-    BEAST // can only go to playful.
+    BEAST, // can only go to playful.
+    INDICATING
 };
 
 public class PaperMover : MonoBehaviour
@@ -27,7 +28,7 @@ public class PaperMover : MonoBehaviour
     [SerializeField] float amount = 1.0f; //how much it shakes
     Vector3 startPos;
 
-    float playerPull = -0.008f; // how much paper is pulled when player presses space.
+    float playerPull = -0.0065f; // how much paper is pulled when player presses space.
     float dogPull = 0.002f;
 
     const float PHYSICS_TICK = 0.01f;
@@ -434,19 +435,28 @@ public class PaperMover : MonoBehaviour
 
     void setDoggoPhaseUI (DoggoPhase currPhase) {
         if(currPhase == DoggoPhase.BEAST) {
-            phaseState.setPhase("BEAST!!!");        
+            phaseState.setPhase("BEAST!!!"); 
+            FindObjectOfType<GameManager>().setBeast();     
         }
         else if(currPhase == DoggoPhase.PLAYFUL) {
             phaseState.setPhase("playful!");
+            FindObjectOfType<GameManager>().setNormal(); 
+        }
+        else if(currPhase == DoggoPhase.INDICATING) {
+            phaseState.setPhase("CAREFUL!");
+            FindObjectOfType<GameManager>().setIndicator(); 
         }
         else {
             phaseState.setPhase("distracted!");
+            FindObjectOfType<GameManager>().setNormal(); 
         }
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        QualitySettings.vSyncCount = 0;
+        //Application.targetFrameRate = -1;
         startPos = this.transform.position;
         rnd = new System.Random();
 
@@ -488,6 +498,7 @@ public class PaperMover : MonoBehaviour
     {
         if (phase == DoggoPhase.DISTRACTED) return 0;
         if (phase == DoggoPhase.PLAYFUL) return 1;
+        if (phase == DoggoPhase.INDICATING) return 1;
         return 2;
     }
 
@@ -614,7 +625,7 @@ public class PaperMover : MonoBehaviour
             state.dogExcitment = Mathf.Clamp(state.dogExcitment, 0, 99);
         }
 
-        if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment >= state.dogExcitmentThreshold)
+        if ((state.dogPhase == DoggoPhase.PLAYFUL || state.dogPhase == DoggoPhase.INDICATING) && state.dogExcitment >= state.dogExcitmentThreshold)
         {
             state.dogPhase = DoggoPhase.BEAST;
             FindObjectOfType<GameManager>().playGrowls();
@@ -628,10 +639,11 @@ public class PaperMover : MonoBehaviour
             state.lastHealthHitWhen = Time.time; // give them 0.5s to react.
         }
 
-        if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment * 1.2 > state.dogExcitmentThreshold)
+        if (state.dogPhase == DoggoPhase.PLAYFUL && state.dogExcitment * 1.2 >= state.dogExcitmentThreshold)
         {
             //Debug.Log("About to enter beast mode!");
             //add eye animation here!
+            state.dogPhase = DoggoPhase.INDICATING;
         }
 
         if (state.dogPhase == DoggoPhase.DISTRACTED && since(state.whenExitDistracted) > 0)
